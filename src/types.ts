@@ -38,6 +38,11 @@ export interface Comment {
   body: string;
 }
 
+/** GDP time series from API: points or year → value map */
+export type CountryGdp =
+  | Array<{ year: number | string; value: number }>
+  | Record<string, number>;
+
 export interface Country {
   name: {
     common: string;
@@ -81,4 +86,9 @@ export interface Country {
     };
   };
   unMember?: boolean;
+  _id?: string;
+  gdp?: CountryGdp;
+  /** Year string → numeric value, e.g. { "2020": 1744456, ... } */
+  yearlyData?: Record<string, number>;
+  tourist_destinations?: string[];
 }

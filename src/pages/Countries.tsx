@@ -6,7 +6,7 @@ import Input from '../components/ui/Input';
 import { Search, Globe } from 'lucide-react';
 
 export default function Countries() {
-  const { name } = useParams();
+  const { id } = useParams();
   const [countries, setCountries] = useState<Country[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -15,32 +15,18 @@ export default function Countries() {
   useEffect(() => {
     const fetchCountries = async () => {
       try {
-        const response = await fetch('https://projects-restapi.vercel.app/api/v1/countries');
+        const response = await fetch('https://projects-restapi.vercel.app/api/v1/countries',{
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
         if (!response.ok) {
           throw new Error('Failed to fetch countries');
         }
-
         const data = await response.json();
-        
-        // Save to countries.json via server API
-        try {
-          await fetch('/api/save-countries', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-          });
-          console.log('countries.json saved!');
-        } catch (saveErr) {
-          console.error('Failed to save countries.json:', saveErr);
-        }
-
-        // Sort alphabetically
-        const sortedData = data.sort((a: Country, b: Country) => 
-          a.name.common.localeCompare(b.name.common)
-        );
-        setCountries(sortedData);
+        setCountries(data.data);
+       
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -48,16 +34,16 @@ export default function Countries() {
       }
     };
 
-    if (!name) {
+    if (!id) {
       fetchCountries();
     }
-  }, [name]);
+  }, [id]);
 
   const filteredCountries = countries.filter((country) =>
     country.name.common.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (name) {
+  if (id) {
     return <Outlet />;
   }
 
@@ -117,8 +103,8 @@ export default function Countries() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
         {filteredCountries.map((country) => (
           <Link 
-            key={country.name.common}
-            to={`/countries/${country.name.common}`}
+            key={country._id}
+            to={`/countries/${country._id}`}
             className="group block bg-white border border-gray-100 rounded-[32px] p-6 hover:shadow-2xl hover:shadow-black/5 transition-all duration-500 hover:-translate-y-1"
           >
             <div className="space-y-6">

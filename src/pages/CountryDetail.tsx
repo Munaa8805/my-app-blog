@@ -1,41 +1,71 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Country } from '../types';
-import { ArrowLeft, Globe, MapPin, Users, Languages, Landmark, Maximize, Map, Link as LinkIcon } from 'lucide-react';
+import { ArrowLeft, Globe, MapPin, Users, Languages, Landmark, Maximize, Map, TrendingUp, Activity, Palmtree } from 'lucide-react';
 import Spinner from '../components/ui/Spinner';
+import YearlyLineChart, { normalizeCountryGdp } from '../components/YearlyLineChart';
 
 export default function CountryDetail() {
-  const { name } = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
   const [country, setCountry] = useState<Country | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!id) {
+      setLoading(false);
+      setError('Missing country id');
+      setCountry(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    setLoading(true);
+    setError(null);
+    setCountry(null);
+
     const fetchCountry = async () => {
       try {
-        const response = await fetch('https://projects-restapi.vercel.app/api/v1/countries');
-       
+        const response = await fetch(
+          `https://projects-restapi.vercel.app/api/v1/countries/${encodeURIComponent(id)}`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            signal: controller.signal,
+          }
+        );
+
         if (!response.ok) {
-          throw new Error('Failed to fetch countries');
+          throw new Error('Failed to fetch country');
         }
+
         const data = await response.json();
-        const foundCountry = data.find((c: Country) => c.name.common === name);
-        if (!foundCountry) {
-          throw new Error('Country not found');
+        if (!data.success || data.data == null) {
+          throw new Error(
+            typeof data.message === 'string' ? data.message : 'Country not found'
+          );
         }
-        setCountry(foundCountry);
-      } catch (err: any) {
-        setError(err.message);
+
+        setCountry(data.data);
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name === 'AbortError') return;
+        const message =
+          err instanceof Error ? err.message : 'Failed to load country';
+        setError(message);
+        setCountry(null);
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     };
 
-    if (name) {
-      fetchCountry();
-    }
-  }, [name]);
+    fetchCountry();
+    return () => controller.abort();
+  }, [id]);
 
   if (loading) {
     return (
@@ -60,8 +90,13 @@ export default function CountryDetail() {
     );
   }
 
+  const gdpSeries = country.gdp ? normalizeCountryGdp(country.gdp) : [];
+  const yearlySeries = country.yearlyData
+    ? normalizeCountryGdp(country.yearlyData)
+    : [];
+
   return (
-    <div className="space-y-12">
+    <div className="space-y-12 py-6">
       <button 
         onClick={() => navigate('/countries')}
         className="flex items-center space-x-2 text-sm text-gray-500 hover:text-black transition-colors group"
@@ -183,18 +218,96 @@ export default function CountryDetail() {
                 </p>
               </div>
             )}
-          </div>
 
-          <div className="pt-8 border-t border-gray-100">
-            <button 
-              onClick={() => navigate('/countries')}
-              className="px-8 py-4 bg-black text-white rounded-[24px] font-bold uppercase tracking-widest text-xs hover:bg-gray-800 transition-all active:scale-95 shadow-xl shadow-black/10"
-            >
-              Explore More Countries
-            </button>
+            {country.tourist_destinations &&
+              country.tourist_destinations.length > 0 && (
+                <div className="space-y-4 sm:col-span-2">
+                  <div className="flex items-center space-x-3 text-gray-900">
+                    <div className="w-10 h-10 rounded-2xl bg-teal-50 flex items-center justify-center text-teal-600">
+                      <Palmtree size={20} />
+                    </div>
+                    <div>
+                      <h3 className="font-bold">Tourist destinations</h3>
+                      <p className="text-sm text-gray-500 font-normal">
+                        Places worth visiting
+                      </p>
+                    </div>
+                  </div>
+                  <ul className="pl-13 grid gap-2 sm:grid-cols-2">
+                    {country.tourist_destinations.map((place, idx) => (
+                      <li
+                        key={`${place}-${idx}`}
+                        className="text-gray-600 flex items-baseline gap-2 text-[15px] leading-snug"
+                      >
+                        <span
+                          className="text-teal-500 font-bold shrink-0"
+                          aria-hidden
+                        >
+                          ·
+                        </span>
+                        <span>{place}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
           </div>
         </div>
       </div>
+
+      {gdpSeries.length > 0 && (
+        <section
+          className="bg-white border border-gray-100 rounded-[32px] p-6 md:p-8 space-y-6 shadow-sm"
+          aria-labelledby="gdp-heading"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-sky-50 flex items-center justify-center text-sky-600">
+              <TrendingUp size={20} />
+            </div>
+            <div>
+              <h2 id="gdp-heading" className="text-lg font-bold text-gray-900">
+                GDP over time
+              </h2>
+              <p className="text-sm text-gray-500">
+                Nominal GDP (billions USD), by year
+              </p>
+            </div>
+          </div>
+          <YearlyLineChart
+            data={gdpSeries}
+            valueFormat="usd"
+            axisMillionsUsdShowBillions
+            ariaLabel="GDP over time by year"
+          />
+        </section>
+      )}
+
+      {yearlySeries.length > 0 && (
+        <section
+          className="bg-white border border-gray-100 rounded-[32px] p-6 md:p-8 space-y-6 shadow-sm"
+          aria-labelledby="yearly-data-heading"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-violet-50 flex items-center justify-center text-violet-600">
+              <Activity size={20} />
+            </div>
+            <div>
+              <h2 id="yearly-data-heading" className="text-lg font-bold text-gray-900">
+                Yearly data
+              </h2>
+              <p className="text-sm text-gray-500">
+                Billions USD by calendar year
+              </p>
+            </div>
+          </div>
+          <YearlyLineChart
+            data={yearlySeries}
+            valueFormat="number"
+            axisMillionsUsdShowBillions
+            ariaLabel="Yearly data trend by year"
+          />
+        </section>
+      )}
     </div>
   );
 }

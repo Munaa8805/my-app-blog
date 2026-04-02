@@ -29,7 +29,7 @@ export default function App() {
                 <Route path=":id" element={<ProductDetail />} />
               </Route>
               <Route path="countries" element={<Countries />}>
-                <Route path=":name" element={<CountryDetail />} />
+                <Route path=":id" element={<CountryDetail />} />
               </Route>
               <Route 
                 path="orders" 
