@@ -107,11 +107,11 @@ export default function CountryDetail() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
         <div className="space-y-8">
-          <div className="aspect-[16/10] bg-gray-50 rounded-[48px] overflow-hidden shadow-2xl shadow-black/5">
-            <img 
-              src={country.flags?.svg} 
-              alt={country.name.common} 
-              className="w-full h-full object-cover"
+          <div className="aspect-[16/10] bg-gray-50 rounded-[48px] overflow-hidden shadow-2xl shadow-black/5 p-6 md:p-10">
+            <img
+              src={country.flags?.svg}
+              alt={country.name.common}
+              className="w-full h-full object-contain"
               referrerPolicy="no-referrer"
             />
           </div>

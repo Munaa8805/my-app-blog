@@ -108,11 +108,14 @@ export default function Countries() {
             className="group block bg-white border border-gray-100 rounded-[32px] p-6 hover:shadow-2xl hover:shadow-black/5 transition-all duration-500 hover:-translate-y-1"
           >
             <div className="space-y-6">
-              <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-gray-50">
-                <img 
-                  src={country.flags?.png} 
+              <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-gray-50 p-3 sm:p-4">
+                <img
+                  src={country.flags?.png}
                   alt={country.name.common}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700"
+                  loading="lazy"
+                  fetchPriority="low"
+                  decoding="async"
                   referrerPolicy="no-referrer"
                 />
               </div>
