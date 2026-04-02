@@ -4,6 +4,8 @@ import { Country } from '../types';
 import { ArrowLeft, Globe, MapPin, Users, Languages, Landmark, Maximize, Map, TrendingUp, Activity, Palmtree } from 'lucide-react';
 import Spinner from '../components/ui/Spinner';
 import YearlyLineChart, { normalizeCountryGdp } from '../components/YearlyLineChart';
+import Seo from '../components/Seo';
+import { DEFAULT_DESCRIPTION, truncateMeta } from '../config/site';
 
 export default function CountryDetail() {
   const { id } = useParams();
@@ -70,6 +72,7 @@ export default function CountryDetail() {
   if (loading) {
     return (
       <div className="py-20 flex flex-col items-center justify-center space-y-4">
+        <Seo title="Country" description={DEFAULT_DESCRIPTION} />
         <Spinner size="lg" />
         <p className="text-gray-400 font-medium animate-pulse">Loading country details...</p>
       </div>
@@ -79,6 +82,10 @@ export default function CountryDetail() {
   if (error || !country) {
     return (
       <div className="text-center py-20 space-y-4">
+        <Seo
+          title="Country not found"
+          description="This country profile could not be loaded. Try the countries directory."
+        />
         <h2 className="text-2xl font-bold">Country not found</h2>
         <button 
           onClick={() => navigate('/countries')}
@@ -97,6 +104,13 @@ export default function CountryDetail() {
 
   return (
     <div className="space-y-12 py-6">
+      <Seo
+        title={country.name.common}
+        description={truncateMeta(
+          `${country.name.official}. Capital: ${country.capital?.[0] ?? 'N/A'}. Region: ${country.subregion ?? country.region ?? '—'}.`
+        )}
+        ogImage={country.flags?.svg ?? country.flags?.png ?? undefined}
+      />
       <button 
         onClick={() => navigate('/countries')}
         className="flex items-center space-x-2 text-sm text-gray-500 hover:text-black transition-colors group"

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Spinner from '../components/ui/Spinner';
+import Seo from '../components/Seo';
 
 export default function Contact() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -19,6 +20,10 @@ export default function Contact() {
   if (submitted) {
     return (
       <div className="py-20 text-center space-y-6 animate-in fade-in zoom-in duration-500">
+        <Seo
+          title="Message sent"
+          description="Thanks for contacting us. We will get back to you soon."
+        />
         <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto">
           <div className="w-10 h-10 border-4 border-green-500 border-t-transparent rounded-full animate-spin" style={{ animationDuration: '0.5s', animationIterationCount: 1, animationFillMode: 'forwards' }} />
           {/* Simple checkmark replacement since I don't want to import another icon just for this */}
@@ -40,6 +45,10 @@ export default function Contact() {
 
   return (
     <div className="space-y-6">
+      <Seo
+        title="Contact"
+        description="Get in touch with questions or feedback. Send a message and we will respond as soon as we can."
+      />
       <h2 className="text-4xl font-bold tracking-tight">Get in Touch</h2>
       <p className="text-lg text-gray-600 max-w-2xl leading-relaxed text-justify">
         Have questions or feedback? We'd love to hear from you. Reach out through any of the channels below.

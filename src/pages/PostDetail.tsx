@@ -6,6 +6,8 @@ import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Textarea from '../components/ui/Textarea';
 import Spinner from '../components/ui/Spinner';
+import Seo from '../components/Seo';
+import { DEFAULT_DESCRIPTION, truncateMeta } from '../config/site';
 
 export default function PostDetail() {
   const { id } = useParams<{ id: string }>();
@@ -64,6 +66,7 @@ export default function PostDetail() {
   if (loading) {
     return (
       <div className="max-w-3xl mx-auto py-20 flex flex-col items-center justify-center space-y-6">
+        <Seo title="Post" description={DEFAULT_DESCRIPTION} />
         <Spinner size="lg" />
         <div className="space-y-2 text-center">
           <p className="text-xl font-bold tracking-tight">Fetching update...</p>
@@ -76,6 +79,10 @@ export default function PostDetail() {
   if (!post) {
     return (
       <div className="text-center py-20 space-y-4">
+        <Seo
+          title="Post not found"
+          description="This update could not be found. Return home to browse other posts."
+        />
         <h2 className="text-2xl font-bold">Post not found</h2>
         <Link to="/" className="text-black font-bold hover:underline">Return Home</Link>
       </div>
@@ -84,6 +91,12 @@ export default function PostDetail() {
 
   return (
     <article className="max-w-3xl mx-auto py-12 space-y-12">
+      <Seo
+        title={post.title}
+        description={truncateMeta(post.body)}
+        ogImage={`https://picsum.photos/seed/${post.id}/1200/630`}
+        ogType="article"
+      />
       <Link 
         to="/" 
         className="inline-flex items-center space-x-2 text-sm font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-colors group"

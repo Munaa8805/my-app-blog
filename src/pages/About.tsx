@@ -1,6 +1,12 @@
+import Seo from '../components/Seo';
+
 export default function About() {
   return (
     <div className="space-y-6">
+      <Seo
+        title="About us"
+        description="Learn about our approach: simple, modular design and a consistent experience across the app."
+      />
       <h2 className="text-4xl font-bold tracking-tight">About Us</h2>
       <p className="text-lg text-gray-600 max-w-2xl leading-relaxed text-justify">
         We believe in simplicity and clarity. Our architecture is designed to be modular and easy to maintain, 

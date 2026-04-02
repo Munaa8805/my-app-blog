@@ -3,6 +3,7 @@ import { Link, Outlet, useParams } from 'react-router-dom';
 import { Country } from '../types';
 import Spinner from '../components/ui/Spinner';
 import Input from '../components/ui/Input';
+import Seo from '../components/Seo';
 import { Search, Globe } from 'lucide-react';
 
 export default function Countries() {
@@ -50,6 +51,7 @@ export default function Countries() {
   if (loading) {
     return (
       <div className="py-20 flex flex-col items-center justify-center space-y-4">
+        <Seo title="Countries" description="Loading country profiles and facts." />
         <Spinner size="lg" />
         <p className="text-gray-400 font-medium animate-pulse">Loading countries...</p>
       </div>
@@ -59,6 +61,10 @@ export default function Countries() {
   if (error) {
     return (
       <div className="py-20 text-center space-y-4">
+        <Seo
+          title="Countries error"
+          description="We could not load the country list. Try again shortly."
+        />
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-50 text-red-500 mb-4">
           <span className="text-2xl font-bold">!</span>
         </div>
@@ -76,6 +82,10 @@ export default function Countries() {
 
   return (
     <div className="space-y-12">
+      <Seo
+        title="Countries"
+        description="Explore countries around the world: capitals, flags, population, and more. Search and open any country profile."
+      />
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
         <div className="space-y-4">
           <div className="flex items-baseline gap-4">

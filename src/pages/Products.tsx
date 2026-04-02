@@ -3,6 +3,7 @@ import { Outlet, useParams } from 'react-router-dom';
 import { Product } from '../types';
 import ProductCard from '../components/ProductCard';
 import Spinner from '../components/ui/Spinner';
+import Seo from '../components/Seo';
 
 export default function Products() {
   const { id } = useParams();
@@ -53,6 +54,7 @@ export default function Products() {
   if (loading) {
     return (
       <div className="py-20 flex flex-col items-center justify-center space-y-4">
+        <Seo title="Products" description="Loading curated products and essentials." />
         <Spinner size="lg" />
         <p className="text-gray-400 font-medium animate-pulse">Loading products...</p>
       </div>
@@ -62,6 +64,10 @@ export default function Products() {
   if (error) {
     return (
       <div className="py-20 text-center space-y-4">
+        <Seo
+          title="Products error"
+          description="We could not load the product catalog. Try again in a moment."
+        />
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-50 text-red-500 mb-4">
           <span className="text-2xl font-bold">!</span>
         </div>
@@ -79,6 +85,10 @@ export default function Products() {
 
   return (
     <div className="space-y-8">
+      <Seo
+        title="Products"
+        description="Browse curated essentials and electronics. Find details, pricing, and add items to your wishlist."
+      />
       <div className="space-y-2">
         <h2 className="text-4xl font-bold tracking-tight">Our Products</h2>
         <p className="text-gray-500">Curated essentials for your lifestyle.</p>

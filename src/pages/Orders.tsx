@@ -1,10 +1,16 @@
 import { DEMO_ORDERS } from '../constants';
 import { Package } from 'lucide-react';
 import OrderCard from '../components/OrderCard';
+import Seo from '../components/Seo';
 
 export default function Orders() {
   return (
     <div className="space-y-8">
+      <Seo
+        title="Orders"
+        description="View your order history and track recent purchases."
+        noindex
+      />
       <div className="space-y-2">
         <h2 className="text-4xl font-bold tracking-tight">Order History</h2>
         <p className="text-gray-500">Track and manage your recent purchases.</p>

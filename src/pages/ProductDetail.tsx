@@ -4,6 +4,8 @@ import { Product } from '../types';
 import { ArrowLeft, ShoppingBag, Heart } from 'lucide-react';
 import { useWishlist } from '../contexts/WishlistContext';
 import Spinner from '../components/ui/Spinner';
+import Seo from '../components/Seo';
+import { DEFAULT_DESCRIPTION, truncateMeta, ensureAbsoluteUrl } from '../config/site';
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -50,6 +52,7 @@ export default function ProductDetail() {
   if (loading) {
     return (
       <div className="py-20 flex flex-col items-center justify-center space-y-4">
+        <Seo title="Product" description={DEFAULT_DESCRIPTION} />
         <Spinner size="lg" />
         <p className="text-gray-400 font-medium animate-pulse">Loading product details...</p>
       </div>
@@ -59,6 +62,10 @@ export default function ProductDetail() {
   if (error || !product) {
     return (
       <div className="text-center py-20 space-y-4">
+        <Seo
+          title="Product not found"
+          description="This product could not be loaded. Browse the shop for available items."
+        />
         <h2 className="text-2xl font-bold">Product not found</h2>
         <button 
           onClick={() => navigate('/products')}
@@ -74,6 +81,13 @@ export default function ProductDetail() {
 
   return (
     <div className="space-y-12">
+      <Seo
+        title={product.name}
+        description={truncateMeta(
+          `${product.description} Category: ${product.category}. Price: $${product.price}.`
+        )}
+        ogImage={ensureAbsoluteUrl(product.image)}
+      />
       <button 
         onClick={() => navigate('/products')}
         className="flex items-center space-x-2 text-sm text-gray-500 hover:text-black transition-colors group"

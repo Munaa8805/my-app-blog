@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import Spinner from '../components/ui/Spinner';
+import Seo from '../components/Seo';
 
 export default function Register() {
   const [name, setName] = useState('');
@@ -71,6 +72,11 @@ export default function Register() {
 
   return (
     <div className="min-h-[60vh] flex items-center justify-center py-12">
+      <Seo
+        title="Create account"
+        description="Create an account to save items, track orders, and personalize your experience."
+        noindex
+      />
       <div className="w-full max-w-md space-y-12 bg-white p-10 rounded-[40px] border border-gray-100 shadow-2xl shadow-black/5">
         <div className="space-y-4 text-center">
           <h2 className="text-4xl font-bold tracking-tight">Create Account</h2>

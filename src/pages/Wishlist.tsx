@@ -2,12 +2,18 @@ import { Link } from 'react-router-dom';
 import { useWishlist } from '../contexts/WishlistContext';
 import { Heart } from 'lucide-react';
 import WishlistItem from '../components/WishlistItem';
+import Seo from '../components/Seo';
 
 export default function Wishlist() {
   const { wishlist, removeFromWishlist } = useWishlist();
 
   return (
     <div className="space-y-8">
+      <Seo
+        title="Wishlist"
+        description="Products you have saved for later."
+        noindex
+      />
       <div className="space-y-2">
         <h2 className="text-4xl font-bold tracking-tight">My Wishlist</h2>
         <p className="text-gray-500">Items you've saved for later.</p>

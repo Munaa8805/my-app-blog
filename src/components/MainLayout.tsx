@@ -1,14 +1,17 @@
 import { Outlet } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import Header from './Header';
 import Footer from './Footer';
 import { motion, AnimatePresence } from 'motion/react';
 import { useLocation } from 'react-router-dom';
+import { SITE_NAME } from '../config/site';
 
 export default function MainLayout() {
   const location = useLocation();
 
   return (
     <div className="min-h-screen flex flex-col font-sans bg-white text-gray-900">
+      <Helmet htmlAttributes={{ lang: 'en' }} defaultTitle={SITE_NAME} />
       <Header />
       <main className="flex-grow">
         <AnimatePresence mode="wait">

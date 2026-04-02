@@ -4,6 +4,8 @@ import PostCard from '../components/PostCard';
 import Input from '../components/ui/Input';
 import Spinner from '../components/ui/Spinner';
 import BannerCarousel from '../components/BannerCarousel';
+import Seo from '../components/Seo';
+import { SITE_NAME } from '../config/site';
 import { Search } from 'lucide-react';
 
 export default function Home() {
@@ -31,6 +33,11 @@ export default function Home() {
 
   return (
     <div className="space-y-12">
+      <Seo
+        title={SITE_NAME}
+        titleIsFull
+        description="Browse the latest community updates, stories, and posts. Search and explore content from our home page."
+      />
       <BannerCarousel />
 
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
