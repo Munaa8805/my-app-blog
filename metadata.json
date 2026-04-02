@@ -1,0 +1,5 @@
+{
+  "name": "React Root Layout App",
+  "description": "A basic React project demonstrating a root layout with React Router and Framer Motion.",
+  "requestFramePermissions": []
+}
