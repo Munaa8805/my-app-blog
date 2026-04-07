@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Country } from '../types';
-import { ArrowLeft, Globe, MapPin, Users, Languages, Landmark, Maximize, Map, TrendingUp, Activity, Palmtree } from 'lucide-react';
+import { ArrowLeft, Globe, MapPin, Users, Languages, Landmark, Maximize, Map, TrendingUp, Activity, Palmtree, Shield } from 'lucide-react';
 import Spinner from '../components/ui/Spinner';
 import YearlyLineChart, { normalizeCountryGdp } from '../components/YearlyLineChart';
 import Seo from '../components/Seo';
@@ -160,6 +160,40 @@ export default function CountryDetail() {
                 {country.continents?.join(', ')}
               </p>
             </div>
+
+            {country.safety_score &&
+              typeof country.safety_score.rank === 'number' &&
+              typeof country.safety_score.score === 'number' && (
+                <div className="bg-white border border-gray-100 rounded-[32px] p-6 space-y-4 sm:col-span-2">
+                  <div className="flex items-center space-x-2 text-gray-400">
+                    <Shield size={16} />
+                    <span className="text-xs font-bold uppercase tracking-widest">
+                      Safety score
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-1">
+                      <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400">
+                        Rank
+                      </p>
+                      <p className="text-2xl font-bold text-gray-900 tabular-nums">
+                        #{country.safety_score.rank.toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400">
+                        Score
+                      </p>
+                      <p className="text-2xl font-bold text-gray-900 tabular-nums">
+                        {country.safety_score.score.toLocaleString(undefined, {
+                          minimumFractionDigits: 3,
+                          maximumFractionDigits: 3,
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
           </div>
         </div>
 

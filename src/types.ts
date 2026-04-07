@@ -91,4 +91,9 @@ export interface Country {
   /** Year string → numeric value, e.g. { "2020": 1744456, ... } */
   yearlyData?: Record<string, number>;
   tourist_destinations?: string[];
+  /** Lower score / rank may indicate better safety depending on API definition. */
+  safety_score?: {
+    rank: number;
+    score: number;
+  };
 }

@@ -1,22 +1,136 @@
 import React, { useEffect, useState } from 'react';
-import { Link, Outlet, useParams } from 'react-router-dom';
+import { Outlet, useParams, useSearchParams } from 'react-router-dom';
 import { Country } from '../types';
 import Spinner from '../components/ui/Spinner';
-import Input from '../components/ui/Input';
 import Seo from '../components/Seo';
-import { Search, Globe } from 'lucide-react';
+import { Globe } from 'lucide-react';
+import CountryCard from '../components/countries/CountryCard';
+import CountriesHeader from '../components/countries/CountriesHeader';
+import CountriesFilters from '../components/countries/CountriesFilters';
+import CountriesPagination from '../components/countries/CountriesPagination';
+
+const COUNTRIES_API = 'https://projects-restapi.vercel.app/api/v1/countries';
+
+const DEFAULT_LIMIT = '20';
+
+/** Fixed API filters (not shown in the browser URL). */
+const API_LIST_FILTERS = {
+  independent: 'true',
+  sort: '-population',
+  minPopulation: '10000000',
+} as const;
+
+/** Continents supported by the countries API (REST-style names). */
+const CONTINENT_OPTIONS = [
+  { value: '', label: 'All continents' },
+  { value: 'Africa', label: 'Africa' },
+  { value: 'Antarctica', label: 'Antarctica' },
+  { value: 'Asia', label: 'Asia' },
+  { value: 'Europe', label: 'Europe' },
+  { value: 'North America', label: 'North America' },
+  { value: 'Oceania', label: 'Oceania' },
+  { value: 'South America', label: 'South America' },
+] as const;
+
+type CountriesPagination = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasMore: boolean;
+  prevPage: number | null;
+  nextPage: number | null;
+};
+
+function parsePage(raw: string | null): number {
+  const p = parseInt(raw ?? '1', 10);
+  return Number.isFinite(p) && p >= 1 ? p : 1;
+}
+
+function parseLimit(raw: string | null): number {
+  const n = parseInt(raw ?? DEFAULT_LIMIT, 10);
+  return Number.isFinite(n) && n > 0 ? Math.min(n, 100) : 20;
+}
+
+/**
+ * Browser URL: limit → continent → page → search
+ * (e.g. ?limit=20&continent=Asia&page=1&search=mongolia).
+ */
+function buildListSearchParams(opts: {
+  limit?: string;
+  page: number;
+  search: string;
+  continent?: string;
+}): URLSearchParams {
+  const p = new URLSearchParams();
+  p.set('limit', opts.limit ?? DEFAULT_LIMIT);
+  const continent = opts.continent?.trim();
+  if (continent) p.set('continent', continent);
+  p.set('page', String(Math.max(1, opts.page)));
+  if (opts.search) p.set('search', opts.search);
+  return p;
+}
 
 export default function Countries() {
   const { id } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const searchFromUrl = searchParams.get('search') ?? '';
+  const continentRaw = searchParams.get('continent')?.trim() ?? '';
+  const continentFromUrl = CONTINENT_OPTIONS.some((o) => o.value === continentRaw)
+    ? continentRaw
+    : '';
+  const pageFromUrl = parsePage(searchParams.get('page'));
+
+  const [inputValue, setInputValue] = useState(searchFromUrl);
   const [countries, setCountries] = useState<Country[]>([]);
+  const [pagination, setPagination] = useState<CountriesPagination | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    setInputValue(searchFromUrl);
+  }, [searchFromUrl]);
+
+  useEffect(() => {
+    if (id) return;
+    if (searchParams.toString() !== '') return;
+    setSearchParams(buildListSearchParams({ page: 1, search: '' }), { replace: true });
+  }, [id, searchParams, setSearchParams]);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      const next = inputValue.trim();
+      if (next === searchFromUrl) return;
+      const limit = searchParams.get('limit') ?? DEFAULT_LIMIT;
+      const continent = searchParams.get('continent')?.trim() ?? '';
+      setSearchParams(
+        buildListSearchParams({ limit, page: 1, search: next, continent }),
+        { replace: true }
+      );
+    }, 400);
+    return () => clearTimeout(t);
+  }, [inputValue, searchFromUrl, searchParams, setSearchParams]);
 
   useEffect(() => {
     const fetchCountries = async () => {
       try {
-        const response = await fetch('https://projects-restapi.vercel.app/api/v1/countries',{
+        setLoading(true);
+        setError(null);
+        const apiSearch = searchParams.get('search')?.trim() ?? '';
+        const apiPage = parsePage(searchParams.get('page'));
+        const apiLimit = parseLimit(searchParams.get('limit'));
+
+        const params = new URLSearchParams({
+          ...API_LIST_FILTERS,
+          limit: String(apiLimit),
+          page: String(apiPage),
+        });
+        const continent = continentFromUrl;
+        if (continent) params.set('continent', continent);
+        if (apiSearch) params.set('search', apiSearch);
+
+        const response = await fetch(`${COUNTRIES_API}?${params.toString()}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -26,10 +140,14 @@ export default function Countries() {
           throw new Error('Failed to fetch countries');
         }
         const data = await response.json();
-        setCountries(data.data);
-       
-      } catch (err: any) {
-        setError(err.message);
+        setCountries(Array.isArray(data.data) ? data.data : []);
+        setPagination(data.pagination ?? null);
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error ? err.message : 'Failed to fetch countries';
+        setError(message);
+        setCountries([]);
+        setPagination(null);
       } finally {
         setLoading(false);
       }
@@ -38,11 +156,32 @@ export default function Countries() {
     if (!id) {
       fetchCountries();
     }
-  }, [id]);
+  }, [id, searchParams]);
 
-  const filteredCountries = countries.filter((country) =>
-    country.name.common.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const commitSearchToUrl = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    const next = inputValue.trim();
+    const limit = searchParams.get('limit') ?? DEFAULT_LIMIT;
+    const continent = searchParams.get('continent')?.trim() ?? '';
+    setSearchParams(
+      buildListSearchParams({ limit, page: 1, search: next, continent }),
+      { replace: true }
+    );
+  };
+
+  const applyContinent = (continent: string) => {
+    const limit = searchParams.get('limit') ?? DEFAULT_LIMIT;
+    const search = searchParams.get('search')?.trim() ?? '';
+    setSearchParams(
+      buildListSearchParams({
+        limit,
+        page: 1,
+        search,
+        continent: continent.trim() || undefined,
+      }),
+      { replace: true }
+    );
+  };
 
   if (id) {
     return <Outlet />;
@@ -70,7 +209,8 @@ export default function Countries() {
         </div>
         <h3 className="text-xl font-bold text-gray-900">Error Loading Countries</h3>
         <p className="text-gray-500 max-w-md mx-auto">{error}</p>
-        <button 
+        <button
+          type="button"
           onClick={() => window.location.reload()}
           className="px-6 py-2 bg-black text-white rounded-xl font-bold uppercase tracking-widest text-[10px] hover:bg-gray-800 transition-all"
         >
@@ -80,78 +220,78 @@ export default function Countries() {
     );
   }
 
+  const total = pagination?.total ?? countries.length;
+  const totalPages = Math.max(1, pagination?.totalPages ?? 1);
+  const currentPage = pagination?.page ?? pageFromUrl;
+  const showingFrom =
+    total === 0 ? 0 : (currentPage - 1) * (pagination?.limit ?? 20) + 1;
+  const showingTo = Math.min(
+    total,
+    (currentPage - 1) * (pagination?.limit ?? 20) + countries.length
+  );
+
+  const goToPage = (p: number) => {
+    const next = Math.max(1, Math.min(p, totalPages));
+    const limit = searchParams.get('limit') ?? DEFAULT_LIMIT;
+    const search = searchParams.get('search')?.trim() ?? '';
+    const continent = searchParams.get('continent')?.trim() ?? '';
+    setSearchParams(
+      buildListSearchParams({ limit, page: next, search, continent }),
+      { replace: true }
+    );
+  };
+
   return (
     <div className="space-y-12">
       <Seo
         title="Countries"
-        description="Explore countries around the world: capitals, flags, population, and more. Search and open any country profile."
+        description="Explore countries around the world: capitals, flags, population, and more. Filter by region and search."
       />
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
-        <div className="space-y-4">
-          <div className="flex items-baseline gap-4">
-            <h2 className="text-5xl font-bold tracking-tight sm:text-7xl">Countries</h2>
-            <span className="text-lg font-medium text-gray-400">
-              ({searchQuery ? `${filteredCountries.length} of ${countries.length}` : countries.length})
-            </span>
-          </div>
-          <p className="text-xl text-gray-500 max-w-2xl leading-relaxed">
-            Explore information about countries around the world.
+      <CountriesHeader
+        total={total}
+        showingFrom={showingFrom}
+        showingTo={showingTo}
+        continent={continentFromUrl}
+        search={searchFromUrl}
+      />
+
+      <CountriesFilters
+        continent={continentFromUrl}
+        continentOptions={CONTINENT_OPTIONS}
+        onContinentChange={applyContinent}
+        searchValue={inputValue}
+        onSearchChange={setInputValue}
+        onSearchSubmit={commitSearchToUrl}
+      />
+
+      {countries.length === 0 ? (
+        <div className="py-20 text-center rounded-[32px] border border-dashed border-gray-200 bg-gray-50/80">
+          <Globe className="mx-auto text-gray-300 mb-4" size={40} />
+          <p className="text-lg font-semibold text-gray-800">No countries match</p>
+          <p className="text-gray-500 text-sm mt-1 max-w-md mx-auto">
+            Try another search or go to the previous page.
           </p>
         </div>
-        
-        <div className="w-full lg:w-80">
-          <Input 
-            placeholder="Search countries..."
-            icon={<Search size={18} />}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="!bg-white border-gray-100 shadow-sm"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-        {filteredCountries.map((country) => (
-          <Link 
-            key={country._id}
-            to={`/countries/${country._id}`}
-            className="group block bg-white border border-gray-100 rounded-[32px] p-6 hover:shadow-2xl hover:shadow-black/5 transition-all duration-500 hover:-translate-y-1"
-          >
-            <div className="space-y-6">
-              <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-gray-50 p-3 sm:p-4">
-                <img
-                  src={country.flags?.png}
-                  alt={country.name.common}
-                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700"
-                  loading="lazy"
-                  fetchPriority="low"
-                  decoding="async"
-                  referrerPolicy="no-referrer"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
-                  {country.name.common}
-                </h3>
-                <div className="flex items-center text-sm text-gray-500 space-x-2">
-                  <Globe size={14} />
-                  <span>{country.capital?.[0] || 'N/A'}</span>
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-gray-50 flex items-center justify-between">
-                <div className="text-xs font-bold uppercase tracking-widest text-gray-400">
-                  {Object.keys(country.currencies || {})[0] || 'N/A'}
-                </div>
-                <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-50 group-hover:text-blue-600 transition-all">
-                  <Globe size={14} />
-                </div>
-              </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          {countries.map((country) => (
+            <div key={country._id}>
+              <CountryCard country={country} />
             </div>
-          </Link>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
+
+      <CountriesPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPrevious={() =>
+          goToPage(pagination?.prevPage != null ? pagination.prevPage : currentPage - 1)
+        }
+        onNext={() =>
+          goToPage(pagination?.nextPage != null ? pagination.nextPage : currentPage + 1)
+        }
+      />
     </div>
   );
 }
