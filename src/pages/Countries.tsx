@@ -15,9 +15,9 @@ const DEFAULT_LIMIT = '20';
 
 /** Fixed API filters (not shown in the browser URL). */
 const API_LIST_FILTERS = {
-  independent: 'true',
+  independent: '',
   sort: '-population',
-  minPopulation: '10000000',
+  minPopulation: '',
 } as const;
 
 /** Continents supported by the countries API (REST-style names). */
